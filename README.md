@@ -4,7 +4,7 @@
 * 提取线特征时,开辟线程.
 * 在Map里绘制线特征
 ## 效果图
-1. ![](picture_source/lsd_1.png)
+1. ![](picture_source/lsd1.png)
   
 2. ![](picture_source/LSD_3.png)
 # ORB-SLAM2
