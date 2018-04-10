@@ -1,10 +1,11 @@
 # Stereo_UW_SLAM
 本算法基于ORB-SLAM2,加入LSD线特征点.(持续优化...)
 * 在ORB基础上实现点-线约束.(`opencv2/line_descriptor.hpp`)
-* 提取线特征时,开辟
+* 提取线特征时,开辟线程.
 * 在Map里绘制线特征
 ## 效果图
 1. ![](picture_source/lsd_1.png)
+  
 2. ![](picture_source/LSD_3.png)
 # ORB-SLAM2
 测试
