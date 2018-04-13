@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE QtCreatorProject>
-<!-- Written by QtCreator 4.2.1, 2018-04-10T15:02:07. -->
+<!-- Written by QtCreator 4.2.1, 2018-04-10T21:05:02. -->
 <qtcreator>
  <data>
   <variable>EnvironmentId</variable>
@@ -396,7 +396,7 @@
     </valuelist>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguation.Title">stereo_euroc</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.Arguments">/home/lumino/hitlumino/ORB_SLAM2/Vocabulary/ORBvoc.txt  /home/lumino/hitlumino/commit_ORB-SLAM2/Examples/Stereo/EuRoC.yaml  /home/lumino/Downloads/mav0</value>
-    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory"></value>
+    <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory">/home/lumino/hitlumino/Stereo_UW_SLAM/Examples/Stereo</value>
     <value type="QString" key="CMakeProjectManager.CMakeRunConfiguration.UserWorkingDirectory.default">/home/lumino/hitlumino/Stereo_UW_SLAM/Examples/Monocular</value>
     <value type="int" key="PE.EnvironmentAspect.Base">2</value>
     <valuelist type="QVariantList" key="PE.EnvironmentAspect.Changes"/>

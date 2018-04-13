@@ -74,6 +74,11 @@ int main(int argc, char **argv)
     // Main loop
     cv::Mat imLeft, imRight;
     cv::Mat imLeftRec, imRightRec;
+    ///
+    ofstream f;
+    f.open("Trajectory.txt");
+    f << fixed;
+    ///
     for(int ni=0; ni<nImages; ni++)
     {
         cout << "process image: " << ni <<endl;
@@ -92,10 +97,19 @@ int main(int argc, char **argv)
         }
 
         std::chrono::steady_clock::time_point t1 = std::chrono::steady_clock::now();
-        
+        cv::Mat Pose;
         // Pass the images to the SLAM system
-        SLAM.TrackStereo(imLeftRec,imRightRec,tframe);
+        Pose=SLAM.TrackStereo(imLeftRec,imRightRec,tframe);
 
+
+        cv::Mat Rwc = Pose.rowRange(0,3).colRange(0,3).t();
+        cv::Mat twc = -Rwc*Pose.rowRange(0,3).col(3);
+    ///写入每一帧位姿
+        f << setprecision(9) <<
+             Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
+             Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
+             Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
+//        f << setprecision(9) <<twc.at<float>(0) << " "<<twc.at<float>(1) << " "<<twc.at<float>(2) << endl;
         std::chrono::steady_clock::time_point t2 = std::chrono::steady_clock::now();
 
         double ttrack= std::chrono::duration_cast<std::chrono::duration<double> >(t2 - t1).count();

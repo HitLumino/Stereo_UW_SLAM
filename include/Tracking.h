@@ -106,8 +106,8 @@ public:
 
     // Lists used to recover the full camera trajectory at the end of the execution.
     // Basically we store the reference keyframe for each frame and its relative transformation
-    list<cv::Mat> mlRelativeFramePoses;
-    list<KeyFrame*> mlpReferences;
+    list<cv::Mat> mlRelativeFramePoses; ///每frame的位姿
+    list<KeyFrame*> mlpReferences;///keyframe
     list<double> mlFrameTimes;
     list<bool> mlbLost;
 

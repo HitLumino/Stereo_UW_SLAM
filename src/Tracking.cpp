@@ -610,8 +610,8 @@ void Tracking::Track()
     {
         // 计算相对姿态T_currentFrame_referenceKeyFrame
         ///存储每一帧的参考帧
-        cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();
-        mlRelativeFramePoses.push_back(Tcr);
+        cv::Mat Tcr = mCurrentFrame.mTcw*mCurrentFrame.mpReferenceKF->GetPoseInverse();//两帧之间的变化位姿
+        mlRelativeFramePoses.push_back(Tcr);///两帧之间的变化位姿
         mlpReferences.push_back(mpReferenceKF);//插入参考帧
         mlFrameTimes.push_back(mCurrentFrame.mTimeStamp);
         mlbLost.push_back(mState==LOST);

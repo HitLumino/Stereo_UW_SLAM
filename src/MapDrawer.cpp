@@ -46,6 +46,7 @@ MapDrawer::MapDrawer(Map* pMap, const string &strSettingPath):mpMap(pMap)
 void MapDrawer::DrawMapLines()
 {
     const vector<KeyFrame*> &vpKFs = mpMap->GetAllKeyFrames();
+    //cout<<"关键帧的数量: "<<vpKFs.size()<<endl;
     glLineWidth(mKeyFrameLineWidth);
     //glColor4f(0.0f,1.0f,0.3f,0.5);
     glColor4f(0.5f,1.0f,0.3f,0.7);

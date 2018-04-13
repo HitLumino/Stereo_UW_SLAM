@@ -26,6 +26,7 @@
 #include <pangolin/pangolin.h>
 #include <iostream>     // std::cout, std::fixed
 #include <iomanip>		// std::setprecision
+
 bool has_suffix(const std::string &str, const std::string &suffix) {
   std::size_t index = str.find(suffix, str.size() - suffix.size());
   return (index != std::string::npos);
@@ -65,7 +66,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
 
     ///Load ORB Vocabulary
     cout << endl << "Loading ORB Vocabulary. This could take a while..." << endl;
-
+/*
     mpVocabulary = new ORBVocabulary();
     bool bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);//词典名字
     if(!bVocLoad)
@@ -75,15 +76,16 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         exit(-1);
     }
     cout << "Vocabulary loaded!" << endl << endl;
-
+*/
 ///可以加载.txt或者.bin
-/*
+
     mpVocabulary = new ORBVocabulary();
     bool bVocLoad = false; // chose loading method based on file extension
-    if (has_suffix(strVocFile, ".txt"))
-	  bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
-	else if(has_suffix(strVocFile, ".bin"))
+
+    if(has_suffix(strVocFile, ".bin"))
 	  bVocLoad = mpVocabulary->loadFromBinaryFile(strVocFile);
+    else if(has_suffix(strVocFile, ".txt"))
+      bVocLoad = mpVocabulary->loadFromTextFile(strVocFile);
 	else
 	  bVocLoad = false;
     if(!bVocLoad)
@@ -93,7 +95,7 @@ System::System(const string &strVocFile, const string &strSettingsFile, const eS
         exit(-1);
     }
     cout << "Vocabulary loaded!" << endl << endl;
-*/
+
     ///Create KeyFrame Database
     mpKeyFrameDatabase = new KeyFrameDatabase(*mpVocabulary);
 
@@ -310,7 +312,7 @@ void System::Shutdown()
 	}
 
     if(mpViewer)
-        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
+        pangolin::BindToContext("Stereo_UW_SLAM: Map Viewer");
 }
 
 void System::SaveTrajectoryTUM(const string &filename)
@@ -342,8 +344,7 @@ void System::SaveTrajectoryTUM(const string &filename)
     list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     list<bool>::iterator lbL = mpTracker->mlbLost.begin();
-    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),
-        lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
+    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(),lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++, lbL++)
     {
         if(*lbL)
             continue;
@@ -420,7 +421,8 @@ void System::SaveTrajectoryKITTI(const string &filename)
     }
 
     vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
-    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);
+
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);//根据id排序
 
     // Transform all keyframes so that the first keyframe is at the origin.
     // After a loop closure the first keyframe might not be at the origin.
@@ -434,13 +436,13 @@ void System::SaveTrajectoryKITTI(const string &filename)
     // We need to get first the keyframe pose and then concatenate the relative transformation.
     // Frames not localized (tracking failure) are not saved.
 
-    // For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+    /// For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
     // which is true when tracking failed (lbL).
     list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
     list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
     for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
     {
-        ORB_SLAM2::KeyFrame* pKF = *lRit;
+        ORB_SLAM2::KeyFrame* pKF = *lRit;///参考帧,关键帧的位姿作为参考
 
         cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
 
@@ -457,7 +459,66 @@ void System::SaveTrajectoryKITTI(const string &filename)
         cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
         cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
 
-        f << setprecision(9) << Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
+//        f << setprecision(9) <<
+//             Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
+//             Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
+//             Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
+        f << setprecision(9) <<twc.at<float>(0) << " "<<twc.at<float>(1) << " "<<twc.at<float>(2) << endl;
+    }
+    f.close();
+    cout << endl << "trajectory saved!" << endl;
+}
+
+void System::FrameTrajectory(const string &filename)
+{
+    cout << endl << "Saving camera trajectory to " << filename << " ..." << endl;
+    if(mSensor==MONOCULAR)
+    {
+        cerr << "ERROR: SaveTrajectoryKITTI cannot be used for monocular." << endl;
+        return;
+    }
+
+    vector<KeyFrame*> vpKFs = mpMap->GetAllKeyFrames();
+
+    sort(vpKFs.begin(),vpKFs.end(),KeyFrame::lId);//根据id排序
+
+    // Transform all keyframes so that the first keyframe is at the origin.
+    // After a loop closure the first keyframe might not be at the origin.
+    cv::Mat Two = vpKFs[0]->GetPoseInverse();
+
+    ofstream f;
+    f.open(filename.c_str());
+    f << fixed;
+
+    // Frame pose is stored relative to its reference keyframe (which is optimized by BA and pose graph).
+    // We need to get first the keyframe pose and then concatenate the relative transformation.
+    // Frames not localized (tracking failure) are not saved.
+
+    /// For each frame we have a reference keyframe (lRit), the timestamp (lT) and a flag
+    // which is true when tracking failed (lbL).
+    list<ORB_SLAM2::KeyFrame*>::iterator lRit = mpTracker->mlpReferences.begin();
+    list<double>::iterator lT = mpTracker->mlFrameTimes.begin();
+    for(list<cv::Mat>::iterator lit=mpTracker->mlRelativeFramePoses.begin(), lend=mpTracker->mlRelativeFramePoses.end();lit!=lend;lit++, lRit++, lT++)
+    {
+        ORB_SLAM2::KeyFrame* pKF = *lRit;///参考帧,关键帧的位姿作为参考
+
+        cv::Mat Trw = cv::Mat::eye(4,4,CV_32F);
+
+        while(pKF->isBad())
+        {
+          //  cout << "bad parent" << endl;
+            Trw = Trw*pKF->mTcp;
+            pKF = pKF->GetParent();
+        }
+
+        Trw = Trw*pKF->GetPose()*Two;
+
+        cv::Mat Tcw = (*lit)*Trw;
+        cv::Mat Rwc = Tcw.rowRange(0,3).colRange(0,3).t();
+        cv::Mat twc = -Rwc*Tcw.rowRange(0,3).col(3);
+
+        f << setprecision(9) <<
+             Rwc.at<float>(0,0) << " " << Rwc.at<float>(0,1)  << " " << Rwc.at<float>(0,2) << " "  << twc.at<float>(0) << " " <<
              Rwc.at<float>(1,0) << " " << Rwc.at<float>(1,1)  << " " << Rwc.at<float>(1,2) << " "  << twc.at<float>(1) << " " <<
              Rwc.at<float>(2,0) << " " << Rwc.at<float>(2,1)  << " " << Rwc.at<float>(2,2) << " "  << twc.at<float>(2) << endl;
     }
