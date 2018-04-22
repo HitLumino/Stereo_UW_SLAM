@@ -94,16 +94,18 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
+
     // ORB extraction
     // 同时对左右目提特征//线程
     //使用引用函数传递  前提是提供一个合适的对象指针作为第一个参数，这里用的是this指的是-->Frame类对象
     thread threadLeft(&Frame::ExtractORB,this,0,imLeft);//this的存在意义？章节2.2传递参数给线程函数
     thread threadRight(&Frame::ExtractORB,this,1,imRight);
-    thread threadLine(&Frame::ExtractLSD,this,imLeft,imRight);
+    //thread threadLine(&Frame::ExtractLSD,this,imLeft,imRight);
 
     threadLeft.join();
     threadRight.join();
-    threadLine.join();
+    ///未提取线特征2018.4.19
+    //threadLine.join();
    // std::cout<<"ok"<<std::endl;
    // ExtractLSD(imLeft,imRight);//this的存在意义？章节2.2传递参数给线程函数
 
