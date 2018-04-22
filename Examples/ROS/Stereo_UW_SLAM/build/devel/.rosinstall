@@ -1,0 +1,2 @@
+- setup-file:
+    local-name: /home/nvidia/catkin_ws/src/Stereo_UW_SLAM/Examples/ROS/Stereo_UW_SLAM/build/devel/setup.sh

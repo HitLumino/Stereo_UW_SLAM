@@ -312,7 +312,7 @@ void System::Shutdown()
 	}
 
     if(mpViewer)
-        pangolin::BindToContext("Stereo_UW_SLAM: Map Viewer");
+        pangolin::BindToContext("ORB-SLAM2: Map Viewer");
 }
 
 void System::SaveTrajectoryTUM(const string &filename)

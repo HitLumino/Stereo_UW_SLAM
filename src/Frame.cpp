@@ -26,8 +26,6 @@
 #include <opencv2/highgui.hpp>
 #include <thread>
 
-
-
 namespace ORB_SLAM2
 {
 
@@ -94,18 +92,16 @@ Frame::Frame(const cv::Mat &imLeft, const cv::Mat &imRight, const double &timeSt
     mvLevelSigma2 = mpORBextractorLeft->GetScaleSigmaSquares();
     mvInvLevelSigma2 = mpORBextractorLeft->GetInverseScaleSigmaSquares();
 
-
     // ORB extraction
     // 同时对左右目提特征//线程
     //使用引用函数传递  前提是提供一个合适的对象指针作为第一个参数，这里用的是this指的是-->Frame类对象
     thread threadLeft(&Frame::ExtractORB,this,0,imLeft);//this的存在意义？章节2.2传递参数给线程函数
     thread threadRight(&Frame::ExtractORB,this,1,imRight);
-    //thread threadLine(&Frame::ExtractLSD,this,imLeft,imRight);
+    thread threadLine(&Frame::ExtractLSD,this,imLeft,imRight);
 
     threadLeft.join();
     threadRight.join();
-    ///未提取线特征2018.4.19
-    //threadLine.join();
+    threadLine.join();
    // std::cout<<"ok"<<std::endl;
    // ExtractLSD(imLeft,imRight);//this的存在意义？章节2.2传递参数给线程函数
 
@@ -347,7 +343,7 @@ int Frame::ExtractLSD(const cv::Mat &im1,const cv::Mat &im2)
             if( mvKeylinesRight[j].octave == 0 )
                 right_lbd.push_back( mlinedescriptorsRight.row( j ) );
         }
-
+	//cout<<left_lbd.size()<< " "<<right_lbd.size()<<endl;//debug
         //开始匹配
         Ptr<BinaryDescriptorMatcher> bdm = BinaryDescriptorMatcher::createBinaryDescriptorMatcher();
         /* require match */
@@ -356,67 +352,75 @@ int Frame::ExtractLSD(const cv::Mat &im1,const cv::Mat &im2)
 
         /* select best matches */
         std::vector<cv::DMatch> good_matches;
-        for ( int i = 0; i < (int) matches.size(); i++ )
-        {
-          if( matches[i].distance < MATCHES_DIST_THRESHOLD )
-            good_matches.push_back( matches[i] );
-        }
-        //Line_N=(int)good_matches.size();
-        //匹配好的线特征
-        for ( int i = 0; i < (int) good_matches.size(); i++ )
-        {
-            KeyLine kp1,kp2;
-            kp1=mvKeylines[good_matches[i].queryIdx];
-            kp2=mvKeylinesRight[good_matches[i].trainIdx];
-            Point2f p1_start =kp1.getStartPoint();
-            Point2f p1_end=kp1.getEndPoint();
 
-            Point2f p2_start =kp2.getStartPoint();
-            Point2f p2_end=kp2.getEndPoint();
-            mLine1StartPoints.push_back(p1_start);
-            mLine2StartPoints.push_back(p2_start);
-            mLine1EndPoints.push_back(p1_end);
-            mLine2EndPoints.push_back(p2_end);
-        }
-        /// depth 是在这里计算的
-        /// depth=baseline*fx/disparity
+	for ( int i = 0; i < (int) matches.size(); i++ )
+	{
+	  if( matches[i].distance < MATCHES_DIST_THRESHOLD )
+	    good_matches.push_back( matches[i] );
+	}
+	//Line_N=(int)good_matches.size();
+	//匹配好的线特征
+	for ( int i = 0; i < (int) good_matches.size(); i++ )
+	{
+	    KeyLine kp1,kp2;
+	    kp1=mvKeylines[good_matches[i].queryIdx];
+	    kp2=mvKeylinesRight[good_matches[i].trainIdx];
+	    Point2f p1_start =kp1.getStartPoint();
+	    Point2f p1_end=kp1.getEndPoint();
+
+	    Point2f p2_start =kp2.getStartPoint();
+	    Point2f p2_end=kp2.getEndPoint();
+	    mLine1StartPoints.push_back(p1_start);
+	    mLine2StartPoints.push_back(p2_start);
+	    mLine1EndPoints.push_back(p1_end);
+	    mLine2EndPoints.push_back(p2_end);
+	}
+	/// depth 是在这里计算的
+	/// depth=baseline*fx/disparity
 //        mvLineStartDepth.resize((int)mLine1StartPoints.size(),0);
 //        mvLineEndDepth.resize((int)mLine1EndPoints.size(),0);
 //        mvLineStartDepth.reserve((int)mLine1StartPoints.size());
 //        mvLineEndDepth.reserve((int)mLine1EndPoints.size());
-        mLineStartPoints_3.reserve((int)mLine1StartPoints.size());
-        mLineEndPoints_3.reserve((int)mLine1EndPoints.size());
+	mLineStartPoints_3.reserve((int)mLine1StartPoints.size());
+	mLineEndPoints_3.reserve((int)mLine1EndPoints.size());
 
-        for(int i = 0; i < (int) mLine1StartPoints.size(); i++ )
-        {
-            float disparty1=mLine1StartPoints[i].x-mLine2StartPoints[i].x;
-            float disparty2=mLine1EndPoints[i].x-mLine2EndPoints[i].x;
-            if(disparty1<mbf/mb && disparty1>0 && disparty2<mbf/mb && disparty2>0)
-            {
-                mvLineStartDepth.push_back(mbf/disparty1);
-                mvLineEndDepth.push_back(mbf/disparty2);
-                cv::Mat tmp1 = (cv::Mat_<float>(3,1) << mLine1StartPoints[i].x,mLine1StartPoints[i].y,mbf/disparty1);
-                cv::Mat tmp2 = (cv::Mat_<float>(3,1) << mLine1EndPoints[i].x,mLine1EndPoints[i].y,mbf/disparty2);
-                mLineStartPoints_3.push_back(tmp1);
-                mLineEndPoints_3.push_back(tmp2);
-            }
-        }
-        sort(mvLineStartDepth.begin(),mvLineStartDepth.end()); // 根据所有匹配对的SAD偏差进行排序, 距离由小到大
-        sort(mvLineEndDepth.begin(),mvLineEndDepth.end());
+	for(int i = 0; i < (int) mLine1StartPoints.size(); i++ )
+	{
+	    float disparty1=mLine1StartPoints[i].x-mLine2StartPoints[i].x;
+	    float disparty2=mLine1EndPoints[i].x-mLine2EndPoints[i].x;
+	    if(disparty1<mbf/mb && disparty1>0 && disparty2<mbf/mb && disparty2>0)
+	    {
+	        mvLineStartDepth.push_back(mbf/disparty1);
+	        mvLineEndDepth.push_back(mbf/disparty2);
+	        cv::Mat tmp1 = (cv::Mat_<float>(3,1) << mLine1StartPoints[i].x,mLine1StartPoints[i].y,mbf/disparty1);
+	        cv::Mat tmp2 = (cv::Mat_<float>(3,1) << mLine1EndPoints[i].x,mLine1EndPoints[i].y,mbf/disparty2);
+	        mLineStartPoints_3.push_back(tmp1);
+	        mLineEndPoints_3.push_back(tmp2);
+	    }
+	}
+	if(mvLineStartDepth.size()>=3)
+	{
 
-        const float median1 = mvLineStartDepth[mvLineStartDepth.size()/2];
-        const float median2 = mvLineEndDepth[mvLineEndDepth.size()/2];
-        const float thDist1 = 1.5f*median1; // 计算自适应距离, 大于此距离的匹配对将剔除
-        const float thDist2 = 1.5f*median2; // 计算自适应距离, 大于此距离的匹配对将剔除
-        for(int i = 0; i < (int)mLineStartPoints_3.size(); i++)
-        {
-            if(mLineStartPoints_3[i].at<float>(2)>thDist1/2||mLineEndPoints_3[i].at<float>(2)>thDist2/2)
-            {
+		sort(mvLineStartDepth.begin(),mvLineStartDepth.end()); // 根据所有匹配对的SAD偏差进行排序, 距离由小到大
+		sort(mvLineEndDepth.begin(),mvLineEndDepth.end());
 
-                mLineStartPoints_3.erase(mLineStartPoints_3.begin()+i);
-                mLineEndPoints_3.erase(mLineEndPoints_3.begin()+i);
-            }
-        }
+		const float median1 = mvLineStartDepth[mvLineStartDepth.size()/2];
+		const float median2 = mvLineEndDepth[mvLineEndDepth.size()/2];
+		const float thDist1 = 1.5f*median1; // 计算自适应距离, 大于此距离的匹配对将剔除
+		const float thDist2 = 1.5f*median2; // 计算自适应距离, 大于此距离的匹配对将剔除
+		for(int i = 0; i < (int)mLineStartPoints_3.size(); i++)
+		{
+		    if(mLineStartPoints_3[i].at<float>(2)>thDist1/2||mLineEndPoints_3[i].at<float>(2)>thDist2/2)
+		    {
+
+			mLineStartPoints_3.erase(mLineStartPoints_3.begin()+i);
+			mLineEndPoints_3.erase(mLineEndPoints_3.begin()+i);
+		    }
+		}
+	}
+
+
+	
 
 
         return 0;
